@@ -3,20 +3,24 @@
 
 #include <GSM.h>
 #include <TimerOne.h>
-//#include <intertricity.h>
 
 
 // Printout debug modem AT commands
 GSM gsmAccess(true);
 GSM_SMS sms;
 
-char remoteNumber[20];  // Holds the emitting number
-const int LED_PIN_OFFSET = 4;
+const int PORT1_PIN = 4;
+const int PORT2_PIN = 5;
 
 struct Status {
     boolean is_updated;
     int port;
 };
+
+char remoteNumber[20];  // Holds the emitting number
+
+int port1_timer = 0;
+int port2_timer = 0;
 
 
 void init_gsm() {
@@ -39,24 +43,48 @@ void init_gsm() {
 void init_screen() {
     Serial.print("Screen");
 
-    for (int port = 0; port <= 1; port++) {
-        pinMode(port + LED_PIN_OFFSET, OUTPUT);
-        digitalWrite(port + LED_PIN_OFFSET, HIGH);
-    }
+    Serial.println(" [done]");
+}
+
+void init_ports() {
+    Serial.print("Ports");
+
+    pinMode(PORT1_PIN, OUTPUT);
+    digitalWrite(PORT1_PIN, HIGH);
+
+    pinMode(PORT2_PIN, OUTPUT);
+    digitalWrite(PORT2_PIN, HIGH);
+
+    // Initialize interrupt that updates ports every second
+    Timer1.initialize();
+    Timer1.attachInterrupt(update_ports); 
 
     Serial.println(" [done]");
 }
+
+// Interrupt service routine for ports update timer and
+// switch individual ports on or off accordingly
+void update_ports() {
+    if (port1_timer > 0) {
+        port1_timer--;
+        Serial.println(port1_timer);
+    }
+
+    // If port still has time then leave it switched on otherwise switch off (HIGH)
+    digitalWrite(PORT1_PIN, port1_timer > 0 ? LOW : HIGH);
+}
+
 
 
 void setup()
 {
     Serial.begin(9600);
     Serial.println("Initializing:");
-    init_screen();
 
-
-
+    //init_screen();
+    init_ports();
     //init_gsm();
+
     Serial.println("Ready...");
 }
 
@@ -69,14 +97,12 @@ void loop()
     if (status.is_updated) {
         Serial.print("Switching on port: ");
         Serial.println(status.port);
-        switch_on(status.port);
+        if (status.port == PORT1) {
+            port1_timer = 10;
+        }
     }
 
     delay(1000);
-}
-
-void switch_on(int port) {
-    digitalWrite(port + LED_PIN_OFFSET, LOW);
 }
 
 struct Status get_serial_status() {
