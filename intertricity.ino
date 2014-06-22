@@ -13,6 +13,37 @@ const int DEFAULT_EXTRA_PORT_TIME = 10;  // By default customer buys 10 second i
 const int PORT1_PIN = 4;
 const int PORT2_PIN = 5;
 
+
+#define SCREEN_A A1
+#define SCREEN_B A0
+#define SCREEN_C 10
+#define SCREEN_D 9
+#define SCREEN_E 8
+#define SCREEN_F A2
+#define SCREEN_G A3
+
+byte digit_map[9][7]={
+  {HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, LOW},        // 0
+  {LOW, HIGH, HIGH, LOW, LOW, LOW, LOW},            // 1
+  {HIGH, HIGH, LOW, HIGH, HIGH, LOW, HIGH},         // 2
+  {HIGH, HIGH, HIGH, HIGH, LOW, LOW, HIGH},         // 3
+  {LOW, HIGH, HIGH, LOW, LOW, HIGH, HIGH},          // 4
+  {HIGH, LOW, HIGH, HIGH, LOW, HIGH, HIGH},         // 5
+  {HIGH, LOW, HIGH, HIGH, HIGH, HIGH, HIGH},        // 6
+  {HIGH, HIGH, HIGH, LOW, LOW, LOW, LOW},           // 7
+};
+
+
+void screen_display_digit(int digit) {
+    digitalWrite(SCREEN_A, digit_map[digit][0]);
+    digitalWrite(SCREEN_B, digit_map[digit][1]);
+    digitalWrite(SCREEN_C, digit_map[digit][2]);
+    digitalWrite(SCREEN_D, digit_map[digit][3]);
+    digitalWrite(SCREEN_E, digit_map[digit][4]);
+    digitalWrite(SCREEN_F, digit_map[digit][5]);
+    digitalWrite(SCREEN_G, digit_map[digit][6]);
+}
+
 struct Status {
     boolean is_updated;
     int port;
@@ -45,6 +76,16 @@ void init_gsm() {
 
 void init_screen() {
     Serial.print("Screen");
+
+    pinMode(SCREEN_A, OUTPUT);
+    pinMode(SCREEN_B, OUTPUT);
+    pinMode(SCREEN_C, OUTPUT);
+    pinMode(SCREEN_D, OUTPUT);
+    pinMode(SCREEN_E, OUTPUT);
+    pinMode(SCREEN_F, OUTPUT);
+    pinMode(SCREEN_G, OUTPUT);
+
+    screen_display_digit(0);
 
     Serial.println(" [done]");
 }
@@ -91,7 +132,7 @@ void setup()
     Serial.begin(9600);
     Serial.println("Initializing:");
 
-    //init_screen();
+    init_screen();
     init_ports();
     //init_gsm();
 
@@ -105,25 +146,40 @@ void loop()
 
     status = get_serial_status();
     if (status.is_updated) {
-        switch (status.port) {
-            case PORT1:
-                port1_timer += DEFAULT_EXTRA_PORT_TIME; 
-                balance++;
-                break;
-            case PORT2:
-                port2_timer += DEFAULT_EXTRA_PORT_TIME;
-                balance++;
-                break;
-        }
-
-        Serial.print("Account balance: ");
-        Serial.println(balance);
-        Serial.print("Adding time to port: ");
-        Serial.println(status.port);
+        add_credit_to_port(status.port);
     }
 
     delay(1000);
 }
+
+void add_credit_to_port(int port) {
+    switch (port) {
+        case PORT1:
+            port1_timer += DEFAULT_EXTRA_PORT_TIME; 
+            inc_balance();
+            break;
+        case PORT2:
+            port2_timer += DEFAULT_EXTRA_PORT_TIME;
+            inc_balance();
+            break;
+    }
+
+    Serial.print("Account balance: ");
+    Serial.println(balance);
+    Serial.print("Adding time to port: ");
+    Serial.println(port);
+}
+
+void inc_balance() {
+    balance++;
+    update_screen();
+}
+
+
+void update_screen() {
+    screen_display_digit(balance);
+}
+
 
 struct Status get_serial_status() {
     struct Status s;
