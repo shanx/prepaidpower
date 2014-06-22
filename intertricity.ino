@@ -31,10 +31,13 @@ byte digit_map[9][7]={
   {HIGH, LOW, HIGH, HIGH, LOW, HIGH, HIGH},         // 5
   {HIGH, LOW, HIGH, HIGH, HIGH, HIGH, HIGH},        // 6
   {HIGH, HIGH, HIGH, LOW, LOW, LOW, LOW},           // 7
+  {HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH},       // 8
+  {HIGH, HIGH, HIGH, HIGH, LOW, HIGH, HIGH},        // 9
 };
 
 
 void screen_display_digit(int digit) {
+    // XXX Don't go past 9 :)
     digitalWrite(SCREEN_A, digit_map[digit][0]);
     digitalWrite(SCREEN_B, digit_map[digit][1]);
     digitalWrite(SCREEN_C, digit_map[digit][2]);
