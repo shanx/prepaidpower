@@ -6,7 +6,7 @@
 
 
 // Printout debug modem AT commands
-GSM gsmAccess(true);
+GSM cellular(true);
 GSM_SMS sms;
 
 const int DEFAULT_EXTRA_PORT_TIME = 10;  // By default customer buys 10 second increments
@@ -31,7 +31,7 @@ void init_gsm() {
     boolean notConnected = true;
 
     while(notConnected) {
-        if(gsmAccess.begin()==GSM_READY) {
+        if(cellular.begin()==GSM_READY) {
             notConnected = false;
         }
         else {
