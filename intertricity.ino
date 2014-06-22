@@ -9,6 +9,7 @@
 GSM gsmAccess(true);
 GSM_SMS sms;
 
+const int DEFAULT_EXTRA_PORT_TIME = 10;  // By default customer buys 10 second increments
 const int PORT1_PIN = 4;
 const int PORT2_PIN = 5;
 
@@ -21,6 +22,8 @@ char remoteNumber[20];  // Holds the emitting number
 
 int port1_timer = 0;
 int port2_timer = 0;
+
+int balance = 0;
 
 
 void init_gsm() {
@@ -67,11 +70,18 @@ void init_ports() {
 void update_ports() {
     if (port1_timer > 0) {
         port1_timer--;
+        Serial.print("Port 1 seconds remaining: ");
         Serial.println(port1_timer);
+    }
+    if (port2_timer > 0) {
+        port2_timer--;
+        Serial.print("Port 2 seconds remaining: ");
+        Serial.println(port2_timer);
     }
 
     // If port still has time then leave it switched on otherwise switch off (HIGH)
     digitalWrite(PORT1_PIN, port1_timer > 0 ? LOW : HIGH);
+    digitalWrite(PORT2_PIN, port2_timer > 0 ? LOW : HIGH);
 }
 
 
@@ -95,11 +105,21 @@ void loop()
 
     status = get_serial_status();
     if (status.is_updated) {
-        Serial.print("Switching on port: ");
-        Serial.println(status.port);
-        if (status.port == PORT1) {
-            port1_timer = 10;
+        switch (status.port) {
+            case PORT1:
+                port1_timer += DEFAULT_EXTRA_PORT_TIME; 
+                balance++;
+                break;
+            case PORT2:
+                port2_timer += DEFAULT_EXTRA_PORT_TIME;
+                balance++;
+                break;
         }
+
+        Serial.print("Account balance: ");
+        Serial.println(balance);
+        Serial.print("Adding time to port: ");
+        Serial.println(status.port);
     }
 
     delay(1000);
