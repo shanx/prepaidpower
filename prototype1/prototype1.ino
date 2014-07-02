@@ -1,11 +1,25 @@
 /*
+ * Prepaid Power prototype created for Berlin Startupweekend 2014
+ *
+ * This code drives our Arduino prototype that does the following:
+ *  * The Arduino with GSM shield has a pohone number, to this phone number
+ *    one can send an sms message with either the number 1 or 2 as content
+ *  * Upon receiving this sms the total credit balance is increased, this
+ *    balance is shown on a seven segemnt display
+ *  * Based on the number a set amount of time is added to either port 1 or 2
+ *  * When there is still time on either port the respective port will give
+ *    5 volt power to usb socket 1 or 2
+ *  * A timer interrupt routine will decrease the port timers, if there is
+ *    no more time left the power to the usb socket will be switched off.
+ *
+ * Author: Remco Wendt <remco.wendt@gmail.com>
  */
 
 #include <GSM.h>
 #include <TimerOne.h>
 
 
-// Printout debug modem AT commands
+// Printout debug modem AT commands in the serial console
 GSM cellular(true);
 GSM_SMS sms;
 
@@ -22,6 +36,7 @@ const int PORT2_PIN = 5;
 #define SCREEN_F A2
 #define SCREEN_G A3
 
+// Mapping for seven segment display
 byte digit_map[10][7]={
   {HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, LOW},        // 0
   {LOW, HIGH, HIGH, LOW, LOW, LOW, LOW},            // 1
