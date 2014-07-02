@@ -22,7 +22,7 @@ const int PORT2_PIN = 5;
 #define SCREEN_F A2
 #define SCREEN_G A3
 
-byte digit_map[9][7]={
+byte digit_map[10][7]={
   {HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, LOW},        // 0
   {LOW, HIGH, HIGH, LOW, LOW, LOW, LOW},            // 1
   {HIGH, HIGH, LOW, HIGH, HIGH, LOW, HIGH},         // 2
@@ -65,7 +65,7 @@ void init_gsm() {
     boolean notConnected = true;
 
     while(notConnected) {
-        if(cellular.begin()==GSM_READY) {
+        if(cellular.begin("6802")==GSM_READY) {
             notConnected = false;
         }
         else {
@@ -97,10 +97,10 @@ void init_ports() {
     Serial.print("Ports");
 
     pinMode(PORT1_PIN, OUTPUT);
-    digitalWrite(PORT1_PIN, HIGH);
+    digitalWrite(PORT1_PIN, LOW);
 
     pinMode(PORT2_PIN, OUTPUT);
-    digitalWrite(PORT2_PIN, HIGH);
+    digitalWrite(PORT2_PIN, LOW);
 
     // Initialize interrupt that updates ports every second
     Timer1.initialize();
@@ -124,8 +124,8 @@ void update_ports() {
     }
 
     // If port still has time then leave it switched on otherwise switch off (HIGH)
-    digitalWrite(PORT1_PIN, port1_timer > 0 ? LOW : HIGH);
-    digitalWrite(PORT2_PIN, port2_timer > 0 ? LOW : HIGH);
+    digitalWrite(PORT1_PIN, port1_timer > 0 ? HIGH : LOW);
+    digitalWrite(PORT2_PIN, port2_timer > 0 ? HIGH : LOW);
 }
 
 
@@ -137,7 +137,7 @@ void setup()
 
     init_screen();
     init_ports();
-    //init_gsm();
+    init_gsm();
 
     Serial.println("Ready...");
 }
@@ -147,7 +147,7 @@ void loop()
 {
     struct Status status;
 
-    status = get_serial_status();
+    status = get_sms_status();
     if (status.is_updated) {
         add_credit_to_port(status.port);
     }
@@ -203,9 +203,10 @@ struct Status get_serial_status() {
     return s;
 }
 
-/*
-char get_sms_status() {
+struct Status get_sms_status() {
     char c;
+    struct Status s;
+    s.is_updated = false;
 
     // Check if SMS available, if there are new SMSes return the first char
     // XXX What if multiple SMS are received during one loop iteration?
@@ -217,33 +218,19 @@ char get_sms_status() {
         Serial.println(remoteNumber);
 
         // Read first char from SMS, this is a number identifying the port that must switch on
-        c = sms.read();
+        s.port = sms.parseInt();
+        sms.read();
 
-        Serial.println(c);
-        Serial.println("\nEND OF MESSAGE");
+        Serial.println(s.port);
 
         // delete message from modem memory
         sms.flush();
         Serial.println("MESSAGE DELETED");
 
+        s.is_updated = true;
     }
 
-    return c;
+    return s;
 }
-*/
-
-/*
-int parse_status(char status) {
-    int port;
-    int retval = -1;
-
-    port = atoi(status);
-
-    if (port == 1 || port = 2)
-        retval = port;
-
-    return retval;
-}
-*/
 
 
